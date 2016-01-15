@@ -1,0 +1,42 @@
+{
+  "name": "firebase-udp-bridge",
+  "version": "0.0.1",
+  "description": "Allows clients to connect and interact with Firebase over UDP",
+  "devDependencies": {},
+  "dependencies": {
+    "check-update": "0.0.8",
+    "check-update-github": "0.0.3",
+    "colors": "^1.0.3",
+    "commander": "^2.5.0",
+    "firebase": "^2.3.2",
+    "q": "^1.4.1",
+    "underscore": "^1.8.3"
+  },
+  "scripts": {
+    "start": "server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lukevenediger/firebase-udp-bridge/"
+  },
+  "bugs": {
+    "url": "https://github.com/lukevenediger/firebase-udp-bridge/issues/"
+  },
+  "bin": {},
+  "homepage": "https://github.com/lukevenediger/firebase-udp-bridge/",
+  "keywords": [
+    "firebase",
+    "iot",
+    "udp",
+    "internet-of-things"
+  ],
+  "author": {
+    "name": "Luke Venediger",
+    "email": "lukev@lukev.net",
+    "url": "https://github.com/lukevenediger/"
+  },
+  "license": {
+    "type": "MIT",
+    "url": "http://opensource.org/licenses/MIT"
+  }
+}
