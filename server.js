@@ -5,10 +5,10 @@ var program = require('commander'),
     colors = require('colors'),
     Firebase = require('firebase'),
     pkg = require('./package.json'),
-    UDPBridge = require('./lib/udpbridge.js'),
-    SubscriptionService = require('./lib/subscriptionservice.js'),
-    PresenceService = require('./lib/presenceservice.js'),
-    QueryService = require('./lib/queryservice.js');
+    Controller = require('./lib/controller.js'),
+    SubscriptionService = require('./lib/services/subscriptionservice.js'),
+    PresenceService = require('./lib/services/presenceservice.js'),
+    QueryService = require('./lib/services/queryservice.js');
 
 var listenPort = 11000;
 
@@ -40,15 +40,17 @@ function checkForUpgrade() {
 }
 
 function startService() {
-    var firebase = new Firebase('https://devicefub.firebaseio.com/'),
+    var firebase = new Firebase('https://fub-dev.firebaseio.com/'),
         subscriptionService = new SubscriptionService(firebase),
-        presenceService = new PresenceService(),
+        presenceService = new PresenceService(firebase),
         queryService = new QueryService(firebase);
 
-    var udpBridge = new UDPBridge(listenPort,
+    var controller = new Controller(listenPort,
         subscriptionService,
         queryService,
         presenceService);
+
+    controller.start();
 }
 
 checkStartupParameters();

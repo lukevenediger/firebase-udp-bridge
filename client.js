@@ -1,3 +1,4 @@
-/**
- * Created by lukevenediger on 2016/01/19.
- */
+#!/usr/bin/env node
+'use strict';
+
+require('./client/client.js').run();
