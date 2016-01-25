@@ -1,16 +1,18 @@
+/* jshint -W097 */
+/* globals require, module, process, console, setTimeout, clearTimeout */
 'use strict';
 
-var program = require('commander'),
+const program = require('commander'),
     pkg = require('../package.json'),
     dgram = require('dgram'),
     colors = require('colors'),
-    _ = require('underscore'),
     q = require('q'),
     Presets = require('../lib/lookups/presets.js'),
-    MessageUtility = require('../lib/messageutility.js'),
-    MessageType = require('../lib/lookups/messagetype.js');
+    MessageType = require('../lib/lookups/messagetype.js'),
+    MessageFactory = require('./lib/util/messagefactory.js'),
+    SecurityService = require('./lib/services/securityservice.js');
 
-var AUTH_TIMEOUT_MILLISECONDS = 30000;
+const AUTH_TIMEOUT_MILLISECONDS = 30000;
 
 /**
  * Fully functional FUB test client.
@@ -62,7 +64,7 @@ function Client() {
         remotePort = program.port || Presets.serverListenPort;
         deviceId = program.identity;
         deviceSecret = program.secretKey;
-        localListenPort = reportPort + 1;
+        localListenPort = remotePort + 1;
     }
 
     /**
@@ -98,11 +100,11 @@ function Client() {
         }, AUTH_TIMEOUT_MILLISECONDS);
 
         udp.once('message', function handleAuthResponse(incomingBuffer, remoteInfo) {
-            var response = MessageFactory.deserialise(incomingBuffer);
-            if (response.type == MessageType.SESSION_START) {
+            var response = MessageFactory.deserialise(incomingBuffer, remoteInfo);
+            if (response.type === MessageType.SESSION_START) {
                 var sessionKey = SecurityService.decryptSessionKey(response.secret);
                 authDeferred.resolve(udp, sessionKey);
-            } else if (response.type == MessageType.ERROR) {
+            } else if (response.type === MessageType.ERROR) {
                 authDeferred.reject(udp, response);
             } else {
                 authDeferred.reject(udp, new Error('Invalid server response.'));
@@ -142,11 +144,10 @@ function Client() {
 
     /**
      * Called when the server sends an error response or something goes wrong.
-     * @param {Socket} udp the client socket
      * @param {Error} error the error that occurred
      */
-    function handleServerError(udp, error) {
-
+    function handleServerError(error) {
+        console.log('Server error: ' + error);
     }
 
     initialise();

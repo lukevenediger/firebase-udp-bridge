@@ -3,7 +3,18 @@
   "version": "0.0.1",
   "description": "Allows clients to connect and interact with Firebase over UDP",
   "devDependencies": {
-    "gulp": "^3.9.0"
+    "del": "^2.2.0",
+    "gulp": "^3.9.0",
+    "gulp-istanbul": "^0.10.3",
+    "gulp-jasmine": "^2.2.1",
+    "gulp-jshint": "^2.0.0",
+    "gulp-replace": "^0.5.4",
+    "gutil": "^1.6.4",
+    "istanbul": "^0.4.2",
+    "jasmine": "^2.4.1",
+    "jshint": "^2.9.1",
+    "jshint-stylish": "^2.1.0",
+    "replace": "^0.3.0"
   },
   "dependencies": {
     "check-update": "0.0.8",
@@ -37,8 +48,5 @@
     "email": "lukev@lukev.net",
     "url": "https://github.com/lukevenediger/"
   },
-  "license": {
-    "type": "MIT",
-    "url": "http://opensource.org/licenses/MIT"
-  }
+  "license": "MIT"
 }
