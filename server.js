@@ -5,7 +5,7 @@
 /* globals require */
 
 var program = require('commander'),
-    //colors = require('colors'),
+    colors = require('colors'),
     Firebase = require('firebase'),
     pkg = require('./package.json'),
     Controller = require('./lib/controller.js'),
@@ -59,7 +59,11 @@ function startService() {
         authenticationService,
         logService);
 
-    controller.start();
+    controller.start()
+        .then(function started(address) {
+            console.log('Server running at => ' + colors.green(address.address + ':' + address.port));
+        })
+        .done();
 }
 
 checkStartupParameters();

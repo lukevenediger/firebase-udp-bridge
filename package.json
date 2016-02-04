@@ -21,7 +21,7 @@
     "check-update-github": "0.0.3",
     "colors": "^1.0.3",
     "commander": "^2.5.0",
-    "firebase": "^2.3.2",
+    "firebase": "^2.4.0",
     "q": "^1.4.1",
     "underscore": "^1.8.3"
   },

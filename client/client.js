@@ -73,7 +73,7 @@ function Client() {
      * @returns {Promise} a promise that resolves to the UDP socket.
      */
     function initialiseSocket(clientListenPort) {
-        var deferred = q.deferred();
+        var deferred = q.defer();
         var udp = dgram.createSocket('udp4');
 
         udp.once('listening', function listening() {
