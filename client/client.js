@@ -9,8 +9,9 @@ const program = require('commander'),
     q = require('q'),
     Presets = require('../lib/lookups/presets.js'),
     MessageType = require('../lib/lookups/messagetype.js'),
-    MessageFactory = require('./lib/util/messagefactory.js'),
-    SecurityService = require('./lib/services/securityservice.js');
+    MessageFactory = require('../lib/comms/messagefactory.js'),
+    SecurityService = require('../lib/services/securityservice.js'),
+    Authenticate = require('../lib/types/messages/authenticate.js');
 
 const AUTH_TIMEOUT_MILLISECONDS = 30000;
 
@@ -31,10 +32,11 @@ function Client() {
      */
     function initialise() {
         validateStartupParameters();
-        initialiseSocket()
+        initialiseSocket(localListenPort)
             .then(authenticate)
             .then(runMessageLoop)
-            .catch(handleServerError);
+            .catch(handleServerError)
+            .done();
     }
 
     /**
@@ -45,19 +47,10 @@ function Client() {
             .version(pkg.version)
             .option('-s, --server [string]', 'the FUB server address (default: ' + Presets.serverAddress + ')')
             .option('-p, --port [number]', 'the FUB server port (default: ' + Presets.serverListenPort + ')')
-            .option('-k, --secretKey [string]', 'the secret key assigned to the client')
-            .option('-i, --identity [string]', 'the client\'s identity')
-            .option('-r, --request [string]', 'specify the request to execute (default: ping)')
+            .option('-k, --secretKey [string]', 'the secret key assigned to the client (default: none)')
+            .option('-i, --identity [string]', 'the client\'s identity (default: none)')
+            .option('-r, --request [string]', 'specify the request to execute (default: get /fub/version)')
             .parse(process.argv);
-
-        // Must supply an ID
-        if (!program.identity) {
-            console.log(colors.red('Error: ') + 'must supply an identity (--identity)');
-        }
-        // Must supply a secret key
-        if (!program.secretKey) {
-            console.log(colors.red('Error: ') + 'must supply a secret key (--secretKey)');
-        }
 
         // Apply defaults if needed
         remoteAddress = program.server || Presets.serverAddress;
@@ -111,6 +104,9 @@ function Client() {
             }
             clearTimeout(authTimeoutHandle);
         });
+
+        // Send the authenticate packet
+        var authenticate = new Authenticate(deviceId, deviceSecret);
 
         return authDeferred.promise;
     }
