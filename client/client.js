@@ -4,12 +4,9 @@
 
 const program = require('commander'),
     pkg = require('../package.json'),
-    colors = require('colors'),
     q = require('q'),
     Presets = require('../lib/lookups/presets.js'),
     MessageType = require('../lib/lookups/messagetype.js'),
-    MessageFactory = require('../lib/comms/messagefactory.js'),
-    SecurityService = require('../lib/services/securityservice.js'),
     Authenticate = require('../lib/types/messages/authenticate.js'),
     RemoteInfo = require('../lib/types/remoteinfo.js'),
     UDPMessageListenSocket = require('../lib/comms/udpmessagelistensocket.js'),
@@ -105,7 +102,7 @@ function Client() {
 
     /**
      * Process a message received from the FUB
-     * @param {Packet} packet the incoming packet
+     * @param {RequestPacket} packet the incoming packet
      */
     function onIncomingPacket(packet) {
         console.log(packet.sender.address + ':' + packet.sender.port + ' - ' + packet.message.toString());
@@ -126,9 +123,12 @@ function Client() {
 
     /**
      * Handle a packet while waiting for an auth response
-     * @param {Packet} packet the incoming packet
+     * @param {RequestPacket} packet the incoming packet
      */
     function handleIncomingAuthPacket(packet) {
+        // Clear the auth wait timeout
+        clearTimeout(authDeferredTimeoutHandle);
+
         switch (packet.message.type) {
             case MessageType.SESSION_START:
                 sessionSecret = packet.message.secret;
@@ -144,9 +144,8 @@ function Client() {
 
     /**
      * Handle a normal FUB packet
-     * @param {Packet} packet the incoming packet
      */
-    function handleIncomingPacket(packet) {
+    function handleIncomingPacket() {
         console.log('Incoming packet.');
     }
 

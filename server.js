@@ -13,6 +13,7 @@ var program = require('commander'),
     PresenceService = require('./lib/services/presenceservice.js'),
     QueryService = require('./lib/services/queryservice.js'),
     AuthenticationService = require('./lib/services/authenticationservice.js'),
+    SessionService = require('./lib/services/sessionservice.js'),
     LogService = require('./lib/services/logservice.js');
 
 var listenPort = 11000;
@@ -46,10 +47,11 @@ function checkForUpgrade() {
 
 function startService() {
     var firebase = new Firebase('https://fub-dev.firebaseio.com/'),
+        sessionService = new SessionService(firebase),
         subscriptionService = new SubscriptionService(firebase),
         presenceService = new PresenceService(firebase),
         queryService = new QueryService(firebase),
-        authenticationService = new AuthenticationService(firebase),
+        authenticationService = new AuthenticationService(sessionService),
         logService = new LogService();
 
     var controller = new Controller(listenPort,
