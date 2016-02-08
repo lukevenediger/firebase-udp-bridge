@@ -4,14 +4,16 @@
 
 const program = require('commander'),
     pkg = require('../package.json'),
-    dgram = require('dgram'),
     colors = require('colors'),
     q = require('q'),
     Presets = require('../lib/lookups/presets.js'),
     MessageType = require('../lib/lookups/messagetype.js'),
     MessageFactory = require('../lib/comms/messagefactory.js'),
     SecurityService = require('../lib/services/securityservice.js'),
-    Authenticate = require('../lib/types/messages/authenticate.js');
+    Authenticate = require('../lib/types/messages/authenticate.js'),
+    RemoteInfo = require('../lib/types/remoteinfo.js'),
+    UDPMessageListenSocket = require('../lib/comms/udpmessagelistensocket.js'),
+    AuthenticationState = require('../lib/lookups/authenticationstate.js');
 
 const AUTH_TIMEOUT_MILLISECONDS = 30000;
 
@@ -25,17 +27,24 @@ function Client() {
         remotePort,
         localListenPort,
         deviceId,
-        deviceSecret;
+        deviceSecret,
+        sessionSecret,
+        serverRemoteInfo,
+        fubSocket,
+        authDeferred,
+        authDeferredTimeoutHandle,
+        authState; // unauthenticated, waiting-for-auth, authenticated, rejected
 
     /**
      * Initialise the client
      */
     function initialise() {
+        authState = AuthenticationState.NOT_AUTHENTICATED;
+
         validateStartupParameters();
+        serverRemoteInfo = new RemoteInfo(remoteAddress, remotePort);
         initialiseSocket(localListenPort)
             .then(authenticate)
-            .then(runMessageLoop)
-            .catch(handleServerError)
             .done();
     }
 
@@ -66,89 +75,83 @@ function Client() {
      * @returns {Promise} a promise that resolves to the UDP socket.
      */
     function initialiseSocket(clientListenPort) {
-        var deferred = q.defer();
-        var udp = dgram.createSocket('udp4');
+        fubSocket = new UDPMessageListenSocket(clientListenPort);
 
-        udp.once('listening', function listening() {
-            var address = udp.address();
-            console.log('Client listening at\n  => ' + colors.green(address.address + ':' + clientListenPort));
-            deferred.resolve(udp);
-        });
-        udp.bind(clientListenPort);
+        fubSocket.on(UDPMessageListenSocket.PACKET, onIncomingPacket);
+        fubSocket.on(UDPMessageListenSocket.BAD_PACKET, onBadPacket);
 
-        return deferred.promise;
+        return fubSocket.start();
     }
 
     /**
      * Authenticate with the FUB and get a session key
-     * @param {Socket} udp the client socket
      * @returns {Promise} a promise which resolves to the encrypted session key and the UDP socket
      */
-    function authenticate(udp) {
-        var authDeferred = q.defer();
+    function authenticate() {
+        authDeferred = q.defer();
 
         // Set up the auth timeout
-        var authTimeoutHandle = setTimeout(function onAuthTimeout() {
-            authDeferred.reject(udp, new Error('No authentication response, timed-out.'));
+        authDeferredTimeoutHandle = setTimeout(function onAuthTimeout() {
+            authDeferred.reject(new Error('No authentication response, timed-out.'));
         }, AUTH_TIMEOUT_MILLISECONDS);
 
-        udp.once('message', function handleAuthResponse(incomingBuffer, remoteInfo) {
-            var response = MessageFactory.deserialise(incomingBuffer, remoteInfo);
-            if (response.type === MessageType.SESSION_START) {
-                var sessionKey = SecurityService.decryptSessionKey(response.secret);
-                authDeferred.resolve(udp, sessionKey);
-            } else if (response.type === MessageType.ERROR) {
-                authDeferred.reject(udp, response);
-            } else {
-                authDeferred.reject(udp, new Error('Invalid server response.'));
-            }
-            clearTimeout(authTimeoutHandle);
-        });
-
         // Send the authenticate packet
+        authState = AuthenticationState.WAITING_FOR_AUTHENTICATION;
         var authenticate = new Authenticate(deviceId, deviceSecret);
+        fubSocket.sendPacket(authenticate, serverRemoteInfo);
 
         return authDeferred.promise;
     }
 
     /**
-     * Start the client-server message loop
-     * @param {Socket} udp the udp client
-     * @param {String} sessionKey the session key
-     * @returns {Promise} a promise that resolves when the session ends.
-     */
-    function runMessageLoop(udp, sessionKey) {
-
-        udp.on('message', function onHandleMessage(incomingBuffer, remoteInfo) {
-            handleMessage(udp, sessionKey, incomingBuffer, remoteInfo);
-        });
-
-    }
-
-    /**
      * Process a message received from the FUB
-     * @param udp
-     * @param sessionKey
-     * @param incomingBuffer
-     * @param remoteInfo
+     * @param {Packet} packet the incoming packet
      */
-    function handleMessage(udp, sessionKey, incomingBuffer, remoteInfo) {
-        var serverMessage = MessageFactory.deserialise(incomingBuffer);
-        console.log('Received ' + MessageFactory.getMessageTypeName(serverMessage) + ' from ' +
-            remoteInfo.address + ':' + remoteInfo.Port + ' - ' + serverMessage.toString());
+    function onIncomingPacket(packet) {
+        console.log(packet.sender.address + ':' + packet.sender.port + ' - ' + packet.message.toString());
+        if (authState === AuthenticationState.WAITING_FOR_AUTHENTICATION) {
+            handleIncomingAuthPacket(packet);
+        } else {
+            handleIncomingPacket(packet);
+        }
     }
 
     /**
-     * Called when the server sends an error response or something goes wrong.
-     * @param {Error} error the error that occurred
+     * Handle when the socket receives an indecipherable packet
+     * @param {BadPacketException} error a description of the error
      */
-    function handleServerError(error) {
-        console.log('Server error: ' + error);
+    function onBadPacket(error) {
+        console.log('Bad packet: ' + error);
+    }
+
+    /**
+     * Handle a packet while waiting for an auth response
+     * @param {Packet} packet the incoming packet
+     */
+    function handleIncomingAuthPacket(packet) {
+        switch (packet.message.type) {
+            case MessageType.SESSION_START:
+                sessionSecret = packet.message.secret;
+                authState = AuthenticationState.AUTHENTICATED;
+                authDeferred.resolve();
+                break;
+            case MessageType.ERROR:
+                authState = AuthenticationState.ACCESS_DENIED;
+                authDeferred.reject(packet.message);
+                break;
+        }
+    }
+
+    /**
+     * Handle a normal FUB packet
+     * @param {Packet} packet the incoming packet
+     */
+    function handleIncomingPacket(packet) {
+        console.log('Incoming packet.');
     }
 
     initialise();
 }
-
 
 module.exports = {
     run: function() {
