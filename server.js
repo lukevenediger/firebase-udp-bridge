@@ -14,9 +14,10 @@ var program = require('commander'),
     QueryService = require('./lib/services/queryservice.js'),
     AuthenticationService = require('./lib/services/authenticationservice.js'),
     SessionService = require('./lib/services/sessionservice.js'),
-    LogService = require('./lib/services/logservice.js');
+    LogService = require('./lib/services/logservice.js'),
+    Presets = require('./lib/lookups/presets.js');
 
-var listenPort = 11000;
+var listenPort = Presets.serverListenPort;
 
 function checkStartupParameters() {
     program
