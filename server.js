@@ -47,6 +47,9 @@ function checkForUpgrade() {
 }
 
 function startService() {
+    // Ensure that all messages are registered
+    require('./lib/types/messageloader.js');
+
     var firebase = new Firebase('https://fub-dev.firebaseio.com/'),
         sessionService = new SessionService(firebase),
         subscriptionService = new SubscriptionService(firebase),
