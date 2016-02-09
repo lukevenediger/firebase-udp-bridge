@@ -36,6 +36,10 @@ function Client() {
      * Initialise the client
      */
     function initialise() {
+
+        // Ensure that all messages are registered
+        require('../lib/types/messageloader.js');
+
         authState = AuthenticationState.NOT_AUTHENTICATED;
 
         validateStartupParameters();
