@@ -13,6 +13,7 @@ const program = require('commander'),
     AuthenticationState = require('../lib/lookups/authenticationstate.js'),
     PingMessage = require('../lib/types/messages/ping.js'),
     SetIntegerMessage = require('../lib/types/messages/setinteger.js'),
+    SetFloatMessage = require('../lib/types/messages/setfloat.js'),
     NumberUtility = require('../lib/data/numberutility.js');
 
 const AUTH_TIMEOUT_MILLISECONDS = 30000,
@@ -123,9 +124,16 @@ function Client() {
      * Send a command
      */
     function sendCommand() {
-        var message = new SetIntegerMessage(sessionID,
-            '/sensorA/reading',
+        var message;
+
+        message = new SetIntegerMessage(sessionID,
+            '/sensorA/reading/int',
             NumberUtility.nextRandomInt32());
+        fubSocket.sendPacket(message, serverRemoteInfo);
+
+        message = new SetFloatMessage(sessionID,
+            '/sensorA/reading/float',
+            NumberUtility.nextRandomFloat());
         fubSocket.sendPacket(message, serverRemoteInfo);
     }
 
