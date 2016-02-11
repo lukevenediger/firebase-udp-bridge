@@ -86,22 +86,39 @@ function Server() {
             logService = new LogService();
 
         console.log('Server starting up...');
+
+        var controller;
+
         FirebaseUtility.authWithCustomToken(firebase, program.secretkey)
             .then(function success() {
-                console.log('Connected to firebase.');
-                var controller = new Controller(listenPort,
+                controller = new Controller(listenPort,
                     subscriptionService,
                     queryService,
                     presenceService,
                     authenticationService,
                     logService);
 
+                console.log('Connected to firebase.');
                 return controller.start();
             })
-            .then(function ready(address) {
-                console.log('Server running at => ' + colors.green(address.address + ':' + address.port));
+            .then(function success() {
+                controller.online();
+                var address = controller.getSocketAddress();
+                console.log('Server running at => ' + colors.green(address));
+            });
+/*
+        controller.start()
+            .then(function success() {
+                return FirebaseUtility.authWithCustomToken(firebase, program.secretkey);
+            })
+            .then(function success() {
+                console.log('Connected to firebase.');
+                controller.online();
+                var address = controller.getSocketAddress();
+                console.log('Server running at => ' + colors.green(address));
             })
             .done();
+            */
     }
 
     initialize();
