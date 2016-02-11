@@ -11,7 +11,8 @@ const program = require('commander'),
     RemoteInfo = require('../lib/types/remoteinfo.js'),
     UDPMessageListenSocket = require('../lib/comms/udpmessagelistensocket.js'),
     AuthenticationState = require('../lib/lookups/authenticationstate.js'),
-    PingMessage = require('../lib/types/messages/ping.js');
+    PingMessage = require('../lib/types/messages/ping.js'),
+    SetIntegerMessage = require('../lib/types/messages/setinteger.js');
 
 const AUTH_TIMEOUT_MILLISECONDS = 30000,
     PING_DELAY = 10000;
@@ -50,6 +51,7 @@ function Client() {
         initialiseSocket(localListenPort)
             .then(authenticate)
             .then(startPing)
+            .then(sendCommand)
             .done();
     }
 
@@ -116,6 +118,14 @@ function Client() {
         pingTimeoutHandle = setTimeout(onPingTimeout, PING_DELAY);
     }
 
+    /**
+     * Send a command
+     */
+    function sendCommand() {
+        var message = new SetIntegerMessage(sessionID, '/sensorA/reading', new Date().getTime());
+        fubSocket.sendPacket(message, serverRemoteInfo);
+    }
+
     function onPingTimeout() {
         fubSocket.sendPacket(new PingMessage(sessionID), serverRemoteInfo)
             .then(function success() {
@@ -156,6 +166,7 @@ function Client() {
             case MessageType.SESSION_START:
                 sessionID = packet.message.sessionID;
                 authState = AuthenticationState.AUTHENTICATED;
+                console.log('Authenticated. Session ID: ' + sessionID);
                 authDeferred.resolve();
                 break;
             case MessageType.ERROR:
