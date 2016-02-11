@@ -85,8 +85,10 @@ function Server() {
             authenticationService = new AuthenticationService(sessionService),
             logService = new LogService();
 
+        console.log('Server starting up...');
         FirebaseUtility.authWithCustomToken(firebase, program.secretkey)
             .then(function success() {
+                console.log('Connected to firebase.');
                 var controller = new Controller(listenPort,
                     subscriptionService,
                     queryService,
