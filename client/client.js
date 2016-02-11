@@ -10,9 +10,11 @@ const program = require('commander'),
     Authenticate = require('../lib/types/messages/authenticate.js'),
     RemoteInfo = require('../lib/types/remoteinfo.js'),
     UDPMessageListenSocket = require('../lib/comms/udpmessagelistensocket.js'),
-    AuthenticationState = require('../lib/lookups/authenticationstate.js');
+    AuthenticationState = require('../lib/lookups/authenticationstate.js'),
+    PingMessage = require('../lib/types/messages/ping.js');
 
-const AUTH_TIMEOUT_MILLISECONDS = 30000;
+const AUTH_TIMEOUT_MILLISECONDS = 30000,
+    PING_DELAY = 10000;
 
 /**
  * Fully functional FUB test client.
@@ -25,12 +27,13 @@ function Client() {
         localListenPort,
         deviceId,
         deviceSecret,
-        sessionSecret,
+        sessionID,
         serverRemoteInfo,
         fubSocket,
         authDeferred,
         authDeferredTimeoutHandle,
-        authState; // unauthenticated, waiting-for-auth, authenticated, rejected
+        authState, // unauthenticated, waiting-for-auth, authenticated, rejected
+        pingTimeoutHandle;
 
     /**
      * Initialise the client
@@ -46,6 +49,7 @@ function Client() {
         serverRemoteInfo = new RemoteInfo(remoteAddress, remotePort);
         initialiseSocket(localListenPort)
             .then(authenticate)
+            .then(startPing)
             .done();
     }
 
@@ -105,6 +109,21 @@ function Client() {
     }
 
     /**
+     * Start a keep-alive ping so that the FUB knows
+     * we're online
+     */
+    function startPing() {
+        setTimeout(onPingTimeout, PING_DELAY);
+    }
+
+    function onPingTimeout() {
+        fubSocket.sendPacket(new PingMessage(sessionID), serverRemoteInfo)
+            .then(function success() {
+                startPing();
+            })
+    }
+
+    /**
      * Process a message received from the FUB
      * @param {RequestPacket} packet the incoming packet
      */
@@ -135,7 +154,7 @@ function Client() {
 
         switch (packet.message.type) {
             case MessageType.SESSION_START:
-                sessionSecret = packet.message.secret;
+                sessionID = packet.message.sessionID;
                 authState = AuthenticationState.AUTHENTICATED;
                 authDeferred.resolve();
                 break;
