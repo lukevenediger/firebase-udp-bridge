@@ -1,77 +1,109 @@
 #!/usr/bin/env node
 'use strict';
-
 /* jshint -W097 */
 /* globals require */
 
-var program = require('commander'),
-    colors = require('colors'),
-    Firebase = require('firebase'),
-    pkg = require('./package.json'),
-    Controller = require('./lib/controller.js'),
-    SubscriptionService = require('./lib/services/subscriptionservice.js'),
-    PresenceService = require('./lib/services/presenceservice.js'),
-    QueryService = require('./lib/services/queryservice.js'),
-    AuthenticationService = require('./lib/services/authenticationservice.js'),
-    SessionService = require('./lib/services/sessionservice.js'),
-    LogService = require('./lib/services/logservice.js'),
-    Presets = require('./lib/lookups/presets.js');
+/**
+ * The FUB Server
+ * @constructor
+ */
+function Server() {
 
-var listenPort = Presets.serverListenPort;
+    var program = require('commander'),
+        colors = require('colors'),
+        Firebase = require('firebase'),
+        pkg = require('./package.json'),
+        Controller = require('./lib/controller.js'),
+        SubscriptionService = require('./lib/services/subscriptionservice.js'),
+        PresenceService = require('./lib/services/presenceservice.js'),
+        QueryService = require('./lib/services/queryservice.js'),
+        AuthenticationService = require('./lib/services/authenticationservice.js'),
+        SessionService = require('./lib/services/sessionservice.js'),
+        LogService = require('./lib/services/logservice.js'),
+        Presets = require('./lib/lookups/presets.js'),
+        FirebaseUtility = require('./lib/firebase/firebaseutility.js');
 
-function checkStartupParameters() {
-    program
-        .version(pkg.version)
-        .option('-p, --port [number]', 'specifies the port (default: ' + listenPort + ')')
-        .parse(process.argv);
+    var listenPort = Presets.serverListenPort;
 
-    if (!isNaN(parseFloat(program.port)) && isFinite(program.port)){
-        listenPort = program.port;
+    function initialize() {
+        checkStartupParameters();
+        checkForUpgrade();
+        startService();
     }
-}
 
-function checkForUpgrade() {
-    require('check-update')({packageName: pkg.name, packageVersion: pkg.version, isCLI: true}, function(err, latestVersion, defaultMessage){
-        if(!err){
-            console.log(defaultMessage);
+    function checkStartupParameters() {
+        program
+            .version(pkg.version)
+            .option('-p, --port [number]', 'specifies the port (default: ' + listenPort + ')')
+            .option('-f, --firebase [string]', 'specifies the firebase namespace')
+            .option('-k, --secretkey [string]', 'specifies the Firebase secret key')
+            .parse(process.argv);
+
+        if (!isNaN(parseFloat(program.port)) && isFinite(program.port)) {
+            listenPort = program.port;
         }
-    });
 
-    /*
-    require('check-update-github')({name: pkg.name, currentVersion: pkg.version, user: 'lukevenediger', branch: 'master'}, function(err, latestVersion, defaultMessage){
-        if(!err){
-            console.log(defaultMessage);
+        if (!program.firebase) {
+            throw new Error('Must specify a Firebase namespace.');
         }
-    });
-    */
+        program.firebase = 'https://' + program.firebase + '.firebaseio.com';
+
+        if (!program.secretkey) {
+            throw new Error('Must specify a Firebase secret key.');
+        }
+    }
+
+    function checkForUpgrade() {
+        require('check-update')({
+            packageName: pkg.name,
+            packageVersion: pkg.version,
+            isCLI: true
+        }, function (err, latestVersion, defaultMessage) {
+            if (!err) {
+                console.log(defaultMessage);
+            }
+        });
+
+        /*
+         require('check-update-github')({name: pkg.name, currentVersion: pkg.version, user: 'lukevenediger', branch: 'master'}, function(err, latestVersion, defaultMessage){
+         if(!err){
+         console.log(defaultMessage);
+         }
+         });
+         */
+    }
+
+    function startService() {
+        // Ensure that all messages are registered
+        require('./lib/types/messageloader.js');
+
+        var firebase = new Firebase(program.firebase),
+            sessionService = new SessionService(firebase),
+            subscriptionService = new SubscriptionService(firebase),
+            presenceService = new PresenceService(Presets.timeToNextPingMilliseconds),
+            queryService = new QueryService(firebase),
+            authenticationService = new AuthenticationService(sessionService),
+            logService = new LogService();
+
+        FirebaseUtility.authWithCustomToken(firebase, program.secretkey)
+            .then(function success() {
+                var controller = new Controller(listenPort,
+                    subscriptionService,
+                    queryService,
+                    presenceService,
+                    authenticationService,
+                    logService);
+
+                return controller.start();
+            })
+            .then(function ready(address) {
+                console.log('Server running at => ' + colors.green(address.address + ':' + address.port));
+            })
+            .done();
+    }
+
+    initialize();
 }
 
-function startService() {
-    // Ensure that all messages are registered
-    require('./lib/types/messageloader.js');
+new Server();
 
-    var firebase = new Firebase('https://fub-dev.firebaseio.com/'),
-        sessionService = new SessionService(firebase),
-        subscriptionService = new SubscriptionService(firebase),
-        presenceService = new PresenceService(Presets.timeToNextPingMilliseconds),
-        queryService = new QueryService(firebase),
-        authenticationService = new AuthenticationService(sessionService),
-        logService = new LogService();
-
-    var controller = new Controller(listenPort,
-        subscriptionService,
-        queryService,
-        presenceService,
-        authenticationService,
-        logService);
-
-    controller.start()
-        .then(function started(address) {
-            console.log('Server running at => ' + colors.green(address.address + ':' + address.port));
-        })
-        .done();
-}
-
-checkStartupParameters();
-checkForUpgrade();
-startService();

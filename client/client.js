@@ -113,14 +113,14 @@ function Client() {
      * we're online
      */
     function startPing() {
-        setTimeout(onPingTimeout, PING_DELAY);
+        pingTimeoutHandle = setTimeout(onPingTimeout, PING_DELAY);
     }
 
     function onPingTimeout() {
         fubSocket.sendPacket(new PingMessage(sessionID), serverRemoteInfo)
             .then(function success() {
                 startPing();
-            })
+            });
     }
 
     /**
