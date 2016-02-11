@@ -23,6 +23,7 @@
     "commander": "^2.5.0",
     "firebase": "^2.4.0",
     "hexdump-nodejs": "^0.1.0",
+    "node-uuid": "^1.4.7",
     "q": "^1.4.1",
     "underscore": "^1.8.3"
   },

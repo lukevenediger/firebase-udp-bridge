@@ -53,7 +53,7 @@ function startService() {
     var firebase = new Firebase('https://fub-dev.firebaseio.com/'),
         sessionService = new SessionService(firebase),
         subscriptionService = new SubscriptionService(firebase),
-        presenceService = new PresenceService(firebase),
+        presenceService = new PresenceService(Presets.timeToNextPingMilliseconds),
         queryService = new QueryService(firebase),
         authenticationService = new AuthenticationService(sessionService),
         logService = new LogService();
