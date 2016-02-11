@@ -12,7 +12,8 @@ const program = require('commander'),
     UDPMessageListenSocket = require('../lib/comms/udpmessagelistensocket.js'),
     AuthenticationState = require('../lib/lookups/authenticationstate.js'),
     PingMessage = require('../lib/types/messages/ping.js'),
-    SetIntegerMessage = require('../lib/types/messages/setinteger.js');
+    SetIntegerMessage = require('../lib/types/messages/setinteger.js'),
+    NumberUtility = require('../lib/data/numberutility.js');
 
 const AUTH_TIMEOUT_MILLISECONDS = 30000,
     PING_DELAY = 10000;
@@ -122,7 +123,9 @@ function Client() {
      * Send a command
      */
     function sendCommand() {
-        var message = new SetIntegerMessage(sessionID, '/sensorA/reading', new Date().getTime());
+        var message = new SetIntegerMessage(sessionID,
+            '/sensorA/reading',
+            NumberUtility.nextRandomInt32());
         fubSocket.sendPacket(message, serverRemoteInfo);
     }
 
