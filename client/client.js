@@ -131,16 +131,20 @@ function Client() {
             '/sensorA/reading/int',
             NumberUtility.nextRandomInt32());
         fubSocket.sendPacket(message, serverRemoteInfo);
-
+*/
         message = new SetFloatMessage(sessionID,
             '/sensorA/reading/float',
             NumberUtility.nextRandomFloat());
         fubSocket.sendPacket(message, serverRemoteInfo);
-        */
 
         message = new GetMessage(sessionID,
             1,
             '/sensorA/reading/int');
+        fubSocket.sendPacket(message, serverRemoteInfo);
+
+        message = new GetMessage(sessionID,
+            1,
+            '/sensorA/reading/float');
         fubSocket.sendPacket(message, serverRemoteInfo);
     }
 
