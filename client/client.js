@@ -16,7 +16,8 @@ const program = require('commander'),
     SetFloatMessage = require('../lib/types/messages/setfloat.js'),
     GetMessage = require('../lib/types/messages/get.js'),
     NumberUtility = require('../lib/data/numberutility.js'),
-    SubscribeMessage = require('../lib/types/messages/subscribe.js');
+    SubscribeMessage = require('../lib/types/messages/subscribe.js'),
+    FirebaseEventType = require('../lib/lookups/firebaseeventtype.js');
 
 const AUTH_TIMEOUT_MILLISECONDS = 30000,
     PING_DELAY = 10000;
@@ -155,7 +156,8 @@ function Client() {
 
         message = new SubscribeMessage(sessionID,
             2,
-            '/sensorA/reading/changeMe');
+            '/sensorA/reading/changeMe',
+            FirebaseEventType.CHANGED);
         fubSocket.sendPacket(message, serverRemoteInfo);
     }
 
