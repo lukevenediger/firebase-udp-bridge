@@ -129,6 +129,7 @@ function Client() {
     function sendCommand() {
         var message;
 
+        /*
         message = new SetIntegerMessage(sessionID,
             '/sensorA/reading/int',
             NumberUtility.nextRandomInt32());
@@ -153,6 +154,7 @@ function Client() {
             1,
             '/sensorA/reading/float');
         fubSocket.sendPacket(message, serverRemoteInfo);
+        */
 
         message = new SubscribeMessage(sessionID,
             2,
