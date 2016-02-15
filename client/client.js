@@ -79,6 +79,11 @@ function Client() {
         deviceId = program.identity;
         deviceSecret = program.secretKey;
         localListenPort = remotePort + 1;
+
+        // Ensure mandatory parameters
+        if(!deviceId) {
+            throw new Error('Must specify a device ID.');
+        }
     }
 
     /**
