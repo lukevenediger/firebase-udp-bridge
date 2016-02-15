@@ -82,7 +82,7 @@ function Server() {
             subscriptionService = new SubscriptionService(firebase),
             presenceService = new PresenceService(Presets.timeToNextPingMilliseconds),
             queryService = new QueryService(firebase),
-            authenticationService = new AuthenticationService(sessionService),
+            authenticationService = new AuthenticationService(),
             logService = new LogService();
 
         console.log('Server starting up...');
@@ -92,10 +92,12 @@ function Server() {
         FirebaseUtility.authWithCustomToken(firebase, program.secretkey)
             .then(function success() {
                 controller = new Controller(listenPort,
+                    firebase,
                     subscriptionService,
                     queryService,
                     presenceService,
                     authenticationService,
+                    sessionService,
                     logService);
 
                 console.log('Connected to firebase.');
