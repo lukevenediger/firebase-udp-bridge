@@ -141,8 +141,8 @@ function Client() {
         fubSocket.sendPacket(message, serverRemoteInfo);
 */
         message = new SetIntegerMessage(sessionID,
-            '/sensorA/reading/changeMe',
-            NumberUtility.nextRandomInt32());
+            '/devices/TemperatureBox2/output/value1',
+            28);
         fubSocket.sendPacket(message, serverRemoteInfo);
 
         /*
