@@ -18,7 +18,9 @@ const program = require('commander'),
     NumberUtility = require('../lib/data/numberutility.js'),
     SubscribeMessage = require('../lib/types/messages/subscribe.js'),
     FirebaseEventType = require('../lib/lookups/firebaseeventtype.js'),
-    PushBooleanMessage = require('../lib/types/messages/pushboolean.js');
+    PushBooleanMessage = require('../lib/types/messages/pushboolean.js'),
+    SubscribeChannelMessage = require('../lib/types/messages/subscribechannel.js'),
+    LogInfoMessage = require('../lib/types/messages/loginfo.js');
 
 const AUTH_TIMEOUT_MILLISECONDS = 30000,
     PING_DELAY = 10000;
@@ -168,10 +170,32 @@ function Client() {
         fubSocket.sendPacket(message, serverRemoteInfo);
          */
 
-        message = new PushBooleanMessage(sessionID,
-            '/bell/1234',
-            true);
+        message = new LogInfoMessage(sessionID,
+            'This is a log message.');
         fubSocket.sendPacket(message, serverRemoteInfo);
+
+        /*
+        message = new SubscribeChannelMessage(sessionID,
+            9123,
+            '/bell/1234');
+        fubSocket.sendPacket(message, serverRemoteInfo);
+
+        setTimeout(function() {
+            message = new PushBooleanMessage(sessionID,
+                '/bell/1234',
+                true);
+            fubSocket.sendPacket(message, serverRemoteInfo);
+        }, 200);
+        */
+
+        /*
+        setTimeout(function() {
+            message = new PushBooleanMessage(sessionID,
+                '/bell/1234',
+                true);
+            fubSocket.sendPacket(message, serverRemoteInfo);
+        }, 2000);
+        */
     }
 
     function onPingTimeout() {
