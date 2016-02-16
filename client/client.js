@@ -17,7 +17,8 @@ const program = require('commander'),
     GetMessage = require('../lib/types/messages/get.js'),
     NumberUtility = require('../lib/data/numberutility.js'),
     SubscribeMessage = require('../lib/types/messages/subscribe.js'),
-    FirebaseEventType = require('../lib/lookups/firebaseeventtype.js');
+    FirebaseEventType = require('../lib/lookups/firebaseeventtype.js'),
+    PushBooleanMessage = require('../lib/types/messages/pushboolean.js');
 
 const AUTH_TIMEOUT_MILLISECONDS = 30000,
     PING_DELAY = 10000;
@@ -139,13 +140,12 @@ function Client() {
             '/sensorA/reading/int',
             NumberUtility.nextRandomInt32());
         fubSocket.sendPacket(message, serverRemoteInfo);
-*/
+
         message = new SetIntegerMessage(sessionID,
             '/devices/TemperatureBox2/output/value1',
             28);
         fubSocket.sendPacket(message, serverRemoteInfo);
 
-        /*
         message = new SetFloatMessage(sessionID,
             '/sensorA/reading/float',
             NumberUtility.nextRandomFloat());
@@ -160,12 +160,17 @@ function Client() {
             1,
             '/sensorA/reading/float');
         fubSocket.sendPacket(message, serverRemoteInfo);
-        */
 
         message = new SubscribeMessage(sessionID,
             2,
             '/sensorA/reading/changeMe',
             FirebaseEventType.CHANGED);
+        fubSocket.sendPacket(message, serverRemoteInfo);
+         */
+
+        message = new PushBooleanMessage(sessionID,
+            '/bell/1234',
+            true);
         fubSocket.sendPacket(message, serverRemoteInfo);
     }
 
