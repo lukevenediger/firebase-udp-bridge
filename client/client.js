@@ -1,4 +1,5 @@
 /* jshint -W097 */
+/* jshint unused:false */
 /* globals require, module, process, console, setTimeout, clearTimeout */
 'use strict';
 
@@ -20,7 +21,9 @@ const program = require('commander'),
     FirebaseEventType = require('../lib/lookups/firebaseeventtype.js'),
     PushBooleanMessage = require('../lib/types/messages/pushboolean.js'),
     SubscribeChannelMessage = require('../lib/types/messages/subscribechannel.js'),
-    LogInfoMessage = require('../lib/types/messages/loginfo.js');
+    LogInfoMessage = require('../lib/types/messages/loginfo.js'),
+    SetStringMessage = require('../lib/types/messages/setstring.js'),
+    UnsubscribeMessage = require('../lib/types/messages/unsubscribe.js');
 
 const AUTH_TIMEOUT_MILLISECONDS = 30000,
     PING_DELAY = 10000;
@@ -148,6 +151,7 @@ function Client() {
             28);
         fubSocket.sendPacket(message, serverRemoteInfo);
 
+
         message = new SetFloatMessage(sessionID,
             '/sensorA/reading/float',
             NumberUtility.nextRandomFloat());
@@ -163,18 +167,20 @@ function Client() {
             '/sensorA/reading/float');
         fubSocket.sendPacket(message, serverRemoteInfo);
 
+        */
+
         message = new SubscribeMessage(sessionID,
             2,
             '/sensorA/reading/changeMe',
             FirebaseEventType.CHANGED);
         fubSocket.sendPacket(message, serverRemoteInfo);
-         */
+
+        /*
 
         message = new LogInfoMessage(sessionID,
             'This is a log message.');
         fubSocket.sendPacket(message, serverRemoteInfo);
 
-        /*
         message = new SubscribeChannelMessage(sessionID,
             9123,
             '/bell/1234');
@@ -186,15 +192,18 @@ function Client() {
                 true);
             fubSocket.sendPacket(message, serverRemoteInfo);
         }, 200);
-        */
 
-        /*
         setTimeout(function() {
             message = new PushBooleanMessage(sessionID,
                 '/bell/1234',
                 true);
             fubSocket.sendPacket(message, serverRemoteInfo);
         }, 2000);
+
+        message = new SetStringMessage(sessionID,
+            '/sensorA/writing/string',
+            'This is a string value');
+        fubSocket.sendPacket(message, serverRemoteInfo);
         */
     }
 
