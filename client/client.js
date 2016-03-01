@@ -13,17 +13,9 @@ const program = require('commander'),
     UDPMessageListenSocket = require('../lib/comms/udpmessagelistensocket.js'),
     AuthenticationState = require('../lib/lookups/authenticationstate.js'),
     PingMessage = require('../lib/types/messages/ping.js'),
-    SetIntegerMessage = require('../lib/types/messages/setinteger.js'),
-    SetFloatMessage = require('../lib/types/messages/setfloat.js'),
-    GetMessage = require('../lib/types/messages/get.js'),
-    NumberUtility = require('../lib/data/numberutility.js'),
     SubscribeMessage = require('../lib/types/messages/subscribe.js'),
     FirebaseEventType = require('../lib/lookups/firebaseeventtype.js'),
-    PushBooleanMessage = require('../lib/types/messages/pushboolean.js'),
-    SubscribeChannelMessage = require('../lib/types/messages/subscribechannel.js'),
-    LogInfoMessage = require('../lib/types/messages/loginfo.js'),
-    SetStringMessage = require('../lib/types/messages/setstring.js'),
-    UnsubscribeMessage = require('../lib/types/messages/unsubscribe.js');
+    SetMessage = require('../lib/messages/set.js');
 
 const AUTH_TIMEOUT_MILLISECONDS = 30000,
     PING_DELAY = 10000;
@@ -139,6 +131,11 @@ function Client() {
      */
     function sendCommand() {
         var message;
+
+        message = new Set(sessionID,
+            '/sensorA/timestamp',
+            new Date().getTime());
+        fubSocket.sendPacket(message, serverRemoteInfo);
 
         /*
         message = new SetIntegerMessage(sessionID,
