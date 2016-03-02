@@ -14,8 +14,10 @@ const program = require('commander'),
     AuthenticationState = require('../lib/lookups/authenticationstate.js'),
     PingMessage = require('../lib/types/messages/ping.js'),
     SubscribeMessage = require('../lib/types/messages/subscribe.js'),
+    SubscribeChannelMessage = require('../lib/types/messages/subscribechannel.js'),
     FirebaseEventType = require('../lib/lookups/firebaseeventtype.js'),
-    SetMessage = require('../lib/types/messages/set.js');
+    SetMessage = require('../lib/types/messages/set.js'),
+    PushMessage = require('../lib/types/messages/push.js');
 
 const AUTH_TIMEOUT_MILLISECONDS = 30000,
     PING_DELAY = 10000;
@@ -132,7 +134,7 @@ function Client() {
     function sendCommand() {
         var message;
 
-        message = new Set(sessionID,
+        message = new SetMessage(sessionID,
             '/sensorA/timestamp',
             new Date().getTime());
         fubSocket.sendPacket(message, serverRemoteInfo);
@@ -178,25 +180,28 @@ function Client() {
             'This is a log message.');
         fubSocket.sendPacket(message, serverRemoteInfo);
 
+        */
+
         message = new SubscribeChannelMessage(sessionID,
             9123,
             '/bell/1234');
         fubSocket.sendPacket(message, serverRemoteInfo);
 
         setTimeout(function() {
-            message = new PushBooleanMessage(sessionID,
+            message = new PushMessage(sessionID,
                 '/bell/1234',
                 true);
             fubSocket.sendPacket(message, serverRemoteInfo);
-        }, 200);
+        }, 1000);
 
         setTimeout(function() {
-            message = new PushBooleanMessage(sessionID,
+            message = new PushMessage(sessionID,
                 '/bell/1234',
                 true);
             fubSocket.sendPacket(message, serverRemoteInfo);
         }, 2000);
 
+        /*
         message = new SetStringMessage(sessionID,
             '/sensorA/writing/string',
             'This is a string value');
@@ -205,10 +210,12 @@ function Client() {
     }
 
     function onPingTimeout() {
+        /*
         fubSocket.sendPacket(new PingMessage(sessionID), serverRemoteInfo)
             .then(function success() {
                 startPing();
             });
+            */
     }
 
     /**
