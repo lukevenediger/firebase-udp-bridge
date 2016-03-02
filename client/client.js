@@ -15,7 +15,7 @@ const program = require('commander'),
     PingMessage = require('../lib/types/messages/ping.js'),
     SubscribeMessage = require('../lib/types/messages/subscribe.js'),
     FirebaseEventType = require('../lib/lookups/firebaseeventtype.js'),
-    SetMessage = require('../lib/messages/set.js');
+    SetMessage = require('../lib/types/messages/set.js');
 
 const AUTH_TIMEOUT_MILLISECONDS = 30000,
     PING_DELAY = 10000;
