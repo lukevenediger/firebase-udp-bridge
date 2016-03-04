@@ -10,8 +10,8 @@
 function Server() {
 
     var program = require('commander'),
-        colors = require('colors'),
         Firebase = require('firebase'),
+        q = require('q'),
         pkg = require('./package.json'),
         Controller = require('./lib/controller.js'),
         SubscriptionService = require('./lib/services/subscriptionservice.js'),
@@ -21,9 +21,12 @@ function Server() {
         SessionService = require('./lib/services/sessionservice.js'),
         LogService = require('./lib/services/logservice.js'),
         Presets = require('./lib/lookups/presets.js'),
-        FirebaseUtility = require('./lib/firebase/firebaseutility.js');
+        FirebaseUtility = require('./lib/firebase/firebaseutility.js'),
+        UDPMessageListenSocket = require('./lib/comms/udpmessagelistensocket.js'),
+        WSMessageListenSocket = require('./lib/comms/wsmessagelistensocket.js');
 
-    var listenPort = Presets.serverListenPort;
+    var udpListenPort = Presets.udpListenPort,
+        websocketListenPort = Presets.websocketListenPort;
 
     function initialize() {
         checkStartupParameters();
@@ -34,13 +37,18 @@ function Server() {
     function checkStartupParameters() {
         program
             .version(pkg.version)
-            .option('-p, --port [number]', 'specifies the port (default: ' + listenPort + ')')
+            .option('-p, --udpListenPort [number]', 'specifies the udp listen port (default: ' + udpListenPort + ')')
+            .option('-w, --wsListenPort [number]', 'specifies the websocket listen port (default: ' + websocketListenPort + ')')
             .option('-f, --firebase [string]', 'specifies the firebase namespace')
             .option('-k, --secretkey [string]', 'specifies the Firebase secret key')
             .parse(process.argv);
 
-        if (!isNaN(parseFloat(program.port)) && isFinite(program.port)) {
-            listenPort = program.port;
+        if (!isNaN(parseFloat(program.udpListenPort)) && isFinite(program.udpListenPort)) {
+            udpListenPort = program.udpListenPort;
+        }
+
+        if (!isNaN(parseFloat(program.websocketListenPort)) && isFinite(program.websocketListenPort)) {
+            websocketListenPort = program.wsListenPort;
         }
 
         if (!program.firebase) {
@@ -91,8 +99,10 @@ function Server() {
 
         FirebaseUtility.authWithCustomToken(firebase, program.secretkey)
             .then(function success() {
-                controller = new Controller(listenPort,
-                    firebase,
+                console.log('Connected to firebase.');
+
+                // Initialise the controller
+                controller = new Controller(firebase,
                     subscriptionService,
                     queryService,
                     presenceService,
@@ -100,27 +110,20 @@ function Server() {
                     sessionService,
                     logService);
 
-                console.log('Connected to firebase.');
-                return controller.start();
+                // Initialise the input channels
+                var udp = new UDPMessageListenSocket(udpListenPort);
+                var ws = new WSMessageListenSocket(websocketListenPort);
+
+                // Link input channels to the controller
+                udp.on(UDPMessageListenSocket.PACKET, controller.onIncomingPacket);
+                ws.on(WSMessageListenSocket.PACKET, controller.onIncomingPacket);
+
+                return q.all(udp.listen(), ws.listen());
             })
-            .then(function success() {
-                controller.online();
-                var address = controller.getSocketAddress();
-                console.log('Server running at => ' + colors.green(address));
-            });
-/*
-        controller.start()
-            .then(function success() {
-                return FirebaseUtility.authWithCustomToken(firebase, program.secretkey);
-            })
-            .then(function success() {
-                console.log('Connected to firebase.');
-                controller.online();
-                var address = controller.getSocketAddress();
-                console.log('Server running at => ' + colors.green(address));
+            .then(function complete() {
+                console.log('Service has started.');
             })
             .done();
-            */
     }
 
     initialize();
