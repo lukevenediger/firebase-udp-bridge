@@ -1,10 +1,13 @@
-app.controller('viewer-controller',  function ($rootScope, $scope, $firebaseObject, $stateParams) {
+app.controller('viewer-controller',  function ($scope, $firebaseObject, $stateParams) {
     
     $scope.deviceId = $stateParams.deviceId;
     $scope.min = 0;
     $scope.max = 100;
 
-    var ref = (new Firebase("https://devicefub.firebaseio.com/data/")).child($scope.deviceId);
+    var firebase = new Firebase(Config.firebase);
+    var ref = firebase.child("data")
+                        .child($scope.deviceId);
+                        
     $scope.data = $firebaseObject(ref);
     
     $scope.getNextValue = function() {
