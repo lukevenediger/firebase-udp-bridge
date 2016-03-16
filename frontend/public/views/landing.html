@@ -1,0 +1,18 @@
+<md-content class="md-padding" layout="column" layout-align="center center">
+
+    <div layout="column" >
+        <br/ ><br/ ><br/ >
+        <span>Make sure your device's data is coming through correctly.<span>
+        <span>Enter the device id below and view the data in real time.</span>
+    
+        <md-input-container class="md-block" flex-gt-sm >
+                <label>Device Id </label>
+                <input ng-model="deviceId">
+        </md-input-container>
+
+  </div>
+  <div flex-xs  layout="column" layout-align="start start">
+        <md-button class="md-primary" layout="right" ng-click="viewDevice()">View Device</md-button>
+    </div>
+
+</md-content>

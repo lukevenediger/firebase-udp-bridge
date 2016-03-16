@@ -1,0 +1,23 @@
+<div layout="column" layout-fill flex>
+   <md-toolbar>
+      <div class="md-toolbar-tools">
+        <h2>
+             <md-button ui-sref="landing-state">Firebase UDP Bridge</md-button>
+        </h2>
+        <span flex></span>
+        <input data-file id="fileinput" class="ng-hide" name="image" ng-model="my_image_model" type="file">
+        {{selectedContentId}}
+        
+      </div>
+    </md-toolbar>
+
+    <div ui-view></div>
+
+    <footer layout="row" flex layout-align="center end" layout-wrap >
+        <small>
+            <div>Icons made by <a href="http://www.freepik.com" title="Freepik">Freepik</a> from <a href="http://www.flaticon.com" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
+        </small>
+    </footer>
+    <br/ >
+
+</div>

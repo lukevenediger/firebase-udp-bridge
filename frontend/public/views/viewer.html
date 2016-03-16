@@ -1,0 +1,66 @@
+<section layout="column" layout-align="center center">
+<div>
+ <div flex-gt-sm="100" flex>
+    <md-content layout="row">
+
+        <md-list-item class="md-2-line">
+          <img ng-src="icons\device-id.png" class="md-avatar" alt="{{todos[0].who}}" />
+          <div class="md-list-item-text">
+            <h3>Device Id</h3>
+            <p>{{deviceId}}</p>
+          </div>
+        </md-list-item>
+
+        <md-list-item class="md-2-line">
+          <img ng-src="\icons\status.png" class="md-avatar"/>
+          <div class="md-list-item-text">
+            <h3>Status</h3>
+            <p>{{data.status}}</p>
+          </div>
+        </md-list-item>
+
+        <md-list-item class="md-2-line">
+          <img ng-src="icons\value.png" class="md-avatar" alt="{{todos[0].who}}" />
+          <div class="md-list-item-text">
+            <h3>Latest Value</h3>
+            <p>{{data.something}}</p>
+          </div>
+        </md-list-item>
+    </md-content>
+  </div>
+
+  <div>
+    <smoothie-grid width="640" height="480" style="margin: 10px" labelColor="red">
+        <time-series callback="maxValueSeries()" color="black" rate="500"></time-series>
+        <time-series callback="minValueSeries()" color="black" rate="500"></time-series>
+        <time-series callback="getNextValue()" color="blue" rate="500"></time-series>
+    </smoothie-grid>
+
+   <div flex-gt-sm="100" flex>
+    <md-content layout="row">
+
+        <md-list-item class="md-2-line">
+          <img ng-src="\icons\graph-min.png" class="md-avatar"/>
+          <md-input-container class="md-block" flex-gt-sm>
+              <label>Graph bottom line</label>
+              <input ng-model="min">
+            </md-input-container>
+        </md-list-item>
+
+        <md-list-item class="md-2-line">
+          <img ng-src="icons\graph-max.png" class="md-avatar" alt="{{todos[0].who}}" />
+          <div class="md-list-item-text">
+            <md-input-container class="md-block" flex-gt-sm>
+              <label>Graph top line</label>
+              <input ng-model="max">
+            </md-input-container>
+          </div>
+        </md-list-item>
+    </md-content>
+  </div>
+
+</section>
+
+
+
+      
