@@ -1,6 +1,6 @@
 {
   "name": "firebase-udp-bridge",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Allows clients to connect and interact with Firebase over UDP",
   "devDependencies": {
     "del": "^2.2.0",
