@@ -237,7 +237,7 @@ var PullupMode = {
 function Sensor() {
 
     var fub,
-        fubServer = 'ws://192.168.0.8:22000',
+        fubServer = 'ws://devicefub.com:22000',
         deviceID = Sys.conf.clubby.device_id;
 
 

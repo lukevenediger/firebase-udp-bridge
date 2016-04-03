@@ -237,7 +237,7 @@ var PullupMode = {
 function Sensor() {
 
     var fub,
-        fubServer = 'ws://192.168.0.8:22000',
+        fubServer = 'ws://devicefub.com:22000',
         deviceID = Sys.conf.clubby.device_id;
 
 
@@ -282,12 +282,11 @@ function Sensor() {
             if (sample.length > 10) {
                 sample.shift();
             }
-            print(sample);
             // Set the spot value
             fub.set('/' + deviceID + '/lightSensor/spot', ADC.read(0));
-            // Set the rolling 5 second average
+            // Set the rolling 10 second average
             fub.set('/' + deviceID + '/lightSensor/moving5SecondAverage', average(sample));
-        }, 500);
+        }, 1000);
     }
 
     initialise();
