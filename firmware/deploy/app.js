@@ -282,11 +282,12 @@ function Sensor() {
             if (sample.length > 10) {
                 sample.shift();
             }
+            print(sample);
             // Set the spot value
             fub.set('/' + deviceID + '/lightSensor/spot', ADC.read(0));
-            // Set the rolling 10 second average
+            // Set the rolling 5 second average
             fub.set('/' + deviceID + '/lightSensor/moving5SecondAverage', average(sample));
-        }, 1000);
+        }, 500);
     }
 
     initialise();

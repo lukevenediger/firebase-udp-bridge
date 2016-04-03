@@ -3,34 +3,37 @@
 /* jshint -W097 */
 /* globals require */
 
+const program = require('commander'),
+    Firebase = require('firebase'),
+    q = require('q'),
+    winston = require('winston'),
+    pkg = require('./package.json'),
+    Controller = require('./lib/controller.js'),
+    SubscriptionService = require('./lib/services/subscriptionservice.js'),
+    PresenceService = require('./lib/services/presenceservice.js'),
+    QueryService = require('./lib/services/queryservice.js'),
+    AuthenticationService = require('./lib/services/authenticationservice.js'),
+    SessionService = require('./lib/services/sessionservice.js'),
+    LogService = require('./lib/services/logservice.js'),
+    Presets = require('./lib/lookups/presets.js'),
+    FirebaseUtility = require('./lib/firebase/firebaseutility.js'),
+    UDPMessageListenSocket = require('./lib/comms/udpmessagelistensocket.js'),
+    WSMessageListenSocket = require('./lib/comms/wsmessagelistensocket.js');
+
 /**
  * The FUB Server
  * @constructor
  */
 function Server() {
 
-    var program = require('commander'),
-        Firebase = require('firebase'),
-        q = require('q'),
-        pkg = require('./package.json'),
-        Controller = require('./lib/controller.js'),
-        SubscriptionService = require('./lib/services/subscriptionservice.js'),
-        PresenceService = require('./lib/services/presenceservice.js'),
-        QueryService = require('./lib/services/queryservice.js'),
-        AuthenticationService = require('./lib/services/authenticationservice.js'),
-        SessionService = require('./lib/services/sessionservice.js'),
-        LogService = require('./lib/services/logservice.js'),
-        Presets = require('./lib/lookups/presets.js'),
-        FirebaseUtility = require('./lib/firebase/firebaseutility.js'),
-        UDPMessageListenSocket = require('./lib/comms/udpmessagelistensocket.js'),
-        WSMessageListenSocket = require('./lib/comms/wsmessagelistensocket.js');
-
     var udpListenPort = Presets.udpListenPort,
-        websocketListenPort = Presets.websocketListenPort;
+        websocketListenPort = Presets.websocketListenPort,
+        logglyToken;
 
     function initialize() {
         checkStartupParameters();
         checkForUpgrade();
+        setupLogging();
         startService();
     }
 
@@ -41,6 +44,7 @@ function Server() {
             .option('-w, --wsListenPort [number]', 'specifies the websocket listen port (default: ' + websocketListenPort + ')')
             .option('-f, --firebase [string]', 'specifies the firebase namespace')
             .option('-k, --secretkey [string]', 'specifies the Firebase secret key')
+            .option('-l, --logglyToken [string]', 'specifies the Loggly client token')
             .parse(process.argv);
 
         if (!isNaN(parseFloat(program.udpListenPort)) && isFinite(program.udpListenPort)) {
@@ -59,6 +63,8 @@ function Server() {
         if (!program.secretkey) {
             throw new Error('Must specify a Firebase secret key.');
         }
+
+        logglyToken = program.logglyToken;
     }
 
     function checkForUpgrade() {
@@ -68,7 +74,7 @@ function Server() {
             isCLI: true
         }, function (err, latestVersion, defaultMessage) {
             if (!err) {
-                console.log(defaultMessage);
+                winston.info(defaultMessage);
             }
         });
 
@@ -81,7 +87,13 @@ function Server() {
          */
     }
 
+    function setupLogging() {
+        // Nothing to do for now.
+    }
+
     function startService() {
+        winston.info('Service starting up.');
+
         // Ensure that all messages are registered
         require('./lib/types/messageloader.js');
 
@@ -93,13 +105,11 @@ function Server() {
             authenticationService = new AuthenticationService(),
             logService = new LogService();
 
-        console.log('Server starting up...');
-
         var controller;
 
         FirebaseUtility.authWithCustomToken(firebase, program.secretkey)
             .then(function success() {
-                console.log('Connected to firebase.');
+                winston.info('Connected to Firebase.');
 
                 // Initialise the controller
                 controller = new Controller(firebase,
@@ -121,7 +131,7 @@ function Server() {
                 return q.all(udp.listen(), ws.listen());
             })
             .then(function complete() {
-                console.log('Service has started.');
+                winston.info('Service has started.');
             })
             .done();
     }
