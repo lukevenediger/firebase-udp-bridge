@@ -1,0 +1,10 @@
+TEST PACKETS
+
+authenticate:
+{"type":"authenticate","id":"testing"}
+
+set:
+{"type":"set","sessionID":1,"path":"laserCutter/status","value":"idle"}
+
+subscribe:
+{"type":"subscribe","sessionID":1,"requestID":981,"path":"/sensorB/status","eventType":"changed"}

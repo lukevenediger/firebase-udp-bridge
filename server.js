@@ -127,6 +127,7 @@ function Server() {
                 // Link input channels to the controller
                 udp.on(UDPMessageListenSocket.PACKET, controller.onIncomingPacket);
                 ws.on(WSMessageListenSocket.PACKET, controller.onIncomingPacket);
+                ws.on(WSMessageListenSocket.CONNECTION_CLOSED, controller.onConnectionClosed);
 
                 return q.all(udp.listen(), ws.listen());
             })

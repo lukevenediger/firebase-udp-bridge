@@ -1,3 +1,7 @@
+/* jshint -W097 */
+/* globals angular, SmoothieChart, TimeSeries */
+'use strict';
+
 angular.module('smoothie-directive', [])
     .directive('smoothieGrid', function() {
         return {
@@ -18,13 +22,13 @@ angular.module('smoothie-directive', [])
                 this.canvas = $element[0];
 
                 this.smoothie = new SmoothieChart({
-                    grid: { 
-                        strokeStyle: $scope.lineColor || 'transparent', 
+                    grid: {
+                        strokeStyle: $scope.lineColor || 'transparent',
                         fillStyle: $scope.background || 'transparent',
                         minValue : $scope.minValue || 0
                     },
-                    labels: { 
-                        fillStyle: $scope.labelColor || 'transparent' 
+                    labels: {
+                        fillStyle: $scope.labelColor || 'transparent'
                     }
                 });
             }
@@ -44,7 +48,7 @@ angular.module('smoothie-directive', [])
                 callback: '&'
             },
 
-            controller: function($scope, $element) {
+            controller: function($scope) {
                 $scope.rate = $scope.rate || 1000;
                 $scope.line = new TimeSeries();
                 $scope.callback = $scope.callback ? $scope.callback : function() { return false; };

@@ -208,7 +208,8 @@ function FUBConnection(fubServer, deviceID) {
 
 var Pins = {
     ULTRASONIC_TRIGGER: 5,
-    ULTRASONIC_ECHO: 4
+    ULTRASONIC_ECHO: 4,
+    RGB_RED: 15
 };
 
 var PinMode = {
@@ -237,21 +238,23 @@ var PullupMode = {
 function Sensor() {
 
     var fub,
-        fubServer = 'ws://devicefub.com:22000',
+        //fubServer = 'ws://devicefub.com:22000',
+        fubServer = 'ws://192.168.0.196:22000',
         deviceID = Sys.conf.clubby.device_id;
-
 
     function initialise() {
         fub = new FUBConnection(fubServer, deviceID);
 
+        fub.connect();
+        loop();
+        /*
         ensureWifi()
             .then(function success() {
-                fub.connect();
-                loop();
             })
             .catch(function (err) {
                 print ('Oops: ' + err);
             });
+            */
     }
 
     function ensureWifi() {
@@ -272,6 +275,14 @@ function Sensor() {
         });
     }
 
+    function blinkRed() {
+        GPIO.setmode(Pins.RGB_RED, PinMode.OUTPUT, PullupMode.LOW);
+        GPIO.write(Pins.RGB_RED, 1);
+        setTimeout(function () {
+            GPIO.write(Pins.RGB_RED, 0);
+        }, 1000);
+    }
+
     function loop() {
         var sample = [];
 
@@ -286,15 +297,18 @@ function Sensor() {
             fub.set('/' + deviceID + '/lightSensor/spot', ADC.read(0));
             // Set the rolling 10 second average
             fub.set('/' + deviceID + '/lightSensor/moving5SecondAverage', average(sample));
+
+            // Blink the red light
+            blinkRed();
         }, 1000);
     }
 
     initialise();
 }
 
-// new Sensor();
 
 setTimeout(function () {
-    print('Light Version 1');
-}, 1000);
+    print('Light Version 2');
+    //new Sensor();
+}, 10000);
 

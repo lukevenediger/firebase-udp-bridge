@@ -1,3 +1,7 @@
+/* jshint -W097 */
+/* globals app */
+'use strict';
+
 app.config(['$stateProvider', '$httpProvider', '$urlRouterProvider',function($stateProvider, $httpProvider, $urlRouterProvider) {
 
   $stateProvider
@@ -14,8 +18,8 @@ app.config(['$stateProvider', '$httpProvider', '$urlRouterProvider',function($st
         parent: 'default',
         url: "/viewer/{deviceId}",
         templateUrl: 'views/viewer.html',
-        controller : 'viewer-controller',
-    })
+        controller : 'viewer-controller'
+    });
 
     $urlRouterProvider.otherwise(function($injector, $location) {
         $location.path("");
