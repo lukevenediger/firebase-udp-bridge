@@ -28,6 +28,7 @@ function Server() {
 
     var udpListenPort = Presets.udpListenPort,
         websocketListenPort = Presets.websocketListenPort,
+        inactivityTimeoutMS = Presets.inactivityTimeoutMS,
         logglyToken;
 
     function initialize() {
@@ -122,14 +123,15 @@ function Server() {
 
                 // Initialise the input channels
                 var udp = new UDPMessageListenSocket(udpListenPort);
-                var ws = new WSMessageListenSocket(websocketListenPort);
+                var ws = new WSMessageListenSocket(websocketListenPort, inactivityTimeoutMS);
 
                 // Link input channels to the controller
                 udp.on(UDPMessageListenSocket.PACKET, controller.onIncomingPacket);
                 ws.on(WSMessageListenSocket.PACKET, controller.onIncomingPacket);
                 ws.on(WSMessageListenSocket.CONNECTION_CLOSED, controller.onConnectionClosed);
+                ws.on(WSMessageListenSocket.SOCKET_INACTIVE, controller.onConnectionInactive);
 
-                return q.all(udp.listen(), ws.listen());
+                return q.all([udp.listen(), ws.listen()]);
             })
             .then(function complete() {
                 winston.info('Service has started.');
