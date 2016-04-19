@@ -22,7 +22,8 @@ const lintOptions = {
 
 const matchAllSourceFiles = './**/*.js',
     matchNodeModulesDirectory = './node_modules/**',
-    matchAllSpecFiles = './js/tests/*.spec.js';
+    matchAllSpecFiles = './js/tests/*.spec.js',
+    matchFrontendFiles = './frontend/**';
 /**
  * Returns a glob that will NOT match the input glob
  * @param {String} glob Input glob
@@ -38,6 +39,7 @@ gulp.task('lint', function() {
             [
                 exclude(matchAllSpecFiles),
                 exclude(matchNodeModulesDirectory),
+                exclude(matchFrontendFiles),
                 matchAllSourceFiles
             ])
         //.pipe(replace(traceProcessing.lineMatchRegex, traceProcessing.processLine))

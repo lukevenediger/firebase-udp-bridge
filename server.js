@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 /* jshint -W097 */
-/* globals require */
+/* globals require, __dirname */
 
 const program = require('commander'),
     Firebase = require('firebase'),
@@ -15,6 +15,7 @@ const program = require('commander'),
     AuthenticationService = require('./lib/services/authenticationservice.js'),
     SessionService = require('./lib/services/sessionservice.js'),
     LogService = require('./lib/services/logservice.js'),
+    WebService = require('./lib/services/webservice.js'),
     Presets = require('./lib/lookups/presets.js'),
     FirebaseUtility = require('./lib/firebase/firebaseutility.js'),
     UDPMessageListenSocket = require('./lib/comms/udpmessagelistensocket.js'),
@@ -29,7 +30,10 @@ function Server() {
     var udpListenPort = Presets.udpListenPort,
         websocketListenPort = Presets.websocketListenPort,
         inactivityTimeoutMS = Presets.inactivityTimeoutMS,
+        webServiceListenPort = Presets.webServiceListenPort,
         logglyToken;
+
+    const FRONTEND_FOLDER = '/frontend/public/';
 
     function initialize() {
         checkStartupParameters();
@@ -93,7 +97,7 @@ function Server() {
     }
 
     function startService() {
-        winston.info('Service starting up.');
+        winston.info('Service starting up in $s', __dirname);
 
         // Ensure that all messages are registered
         require('./lib/types/messageloader.js');
@@ -104,9 +108,12 @@ function Server() {
             presenceService = new PresenceService(Presets.timeToNextPingMilliseconds),
             queryService = new QueryService(firebase),
             authenticationService = new AuthenticationService(),
-            logService = new LogService();
+            logService = new LogService(),
+            webService = new WebService(webServiceListenPort, __dirname + FRONTEND_FOLDER);
 
         var controller;
+
+        webService.start();
 
         FirebaseUtility.authWithCustomToken(firebase, program.secretkey)
             .then(function success() {
