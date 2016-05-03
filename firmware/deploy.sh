@@ -1,4 +1,10 @@
 #!/bin/sh
 
+APPLICATION="$1"
+TARGET="$2"
+
+# combine everything
+echo cat libs.js mongoose-iot.js fub.js ${APPLICATION} > app.js
+
 # deploy the latest code
-curl --verbose -i -F filedata=@app.js http://192.168.1.208/upload
+echo curl --verbose -i -F filedata=@app.js http://${APPLICATION}/upload

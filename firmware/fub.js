@@ -1,25 +1,8 @@
-/**
- * Created by lukevenediger on 2016/03/08.
- */
+var FUBConstants = {
+    TIMESTAMP: 'fub:timestamp'
+};
 
-/* globals Plite, print, Sys, setTimeout, File, Wifi, WebSocket, ADC, GPIO, micros, usleep */
-
-/* jshint ignore:start */
-// PLite - promises library
-function Plite(n){function t(n,e,i){n&&n.then?n.then(function(n){t(n,e,i)})["catch"](function(n){t(n,i,i)}):e(n)}function e(n){u=function(t,e){try{n(t,e)}catch(i){e(i)}},r(),r=void 0}function i(n){e(function(t,e){e(n)})}function c(n){e(function(t){t(n)})}function o(n,t){var e=r;r=function(){e(),u(n,t)}}var u,f=function(){},r=f,l={then:function(n){var t=u||o;return Plite(function(e,i){t(function(t){e(n(t))},i)})},"catch":function(n){var t=u||o;return Plite(function(e,i){t(e,function(t){i(n(t))})})},resolve:function(n){!u&&t(n,c,i)},reject:function(n){!u&&t(n,i,i)}};return n&&n(l.resolve,l.reject),l}Plite.resolve=function(n){return Plite(function(t){t(n)})},Plite.reject=function(n){return Plite(function(t,e){e(n)})},Plite.race=function(n){return n=n||[],Plite(function(t,e){var i=n.length;if(!i)return t();for(var c=0;i>c;++c){var o=n[c];o&&o.then&&o.then(t)["catch"](e)}})},Plite.all=function(n){return n=n||[],Plite(function(t,e){function i(){--u<=0&&t(n)}function c(t,c){t&&t.then?t.then(function(t){n[c]=t,i()})["catch"](e):i()}var o=n.length,u=o;if(!o)return t();for(var f=0;o>f;++f)c(n[f],f)})},"object"==typeof module&&"function"!=typeof define&&(module.exports=Plite);
-/* jshint ignore:end */
-
-function dumpFile(filename) {
-    var h = File.open(filename);
-    print(h.readAll());
-    h.close();
-}
-
-function micros() {
-    return Sys.time() * 1000 * 1000;
-}
-
-function FUBConnection(fubServer, deviceID) {
+function FUBConnection(fubServer, applicationID, deviceID) {
     var ws,
         sessionID,
         serverTime,
@@ -129,6 +112,7 @@ function FUBConnection(fubServer, deviceID) {
             print('Sending auth packet');
             send({
                 type: MessageType.AUTHENTICATE,
+                app: applicationID,
                 id: deviceID
             }, true);
         });
@@ -211,101 +195,3 @@ function FUBConnection(fubServer, deviceID) {
         log(LogLevel.ERROR, module, message);
     };
 }
-
-var Pins = {
-    ULTRASONIC_TRIGGER: 2,
-    ULTRASONIC_ECHO: 14
-};
-
-var PinMode = {
-    INPUT_AND_OUTPUT: 0,
-    INPUT: 1,
-    OUTPUT: 2,
-    INTERRUPT: 3
-};
-
-var InterruptType = {
-    DISABLE_INTERRUPTS: 0,
-    ENABLE_ON_POSITIVE_EDGE: 1,
-    ENABLE_ON_NEGATIVE_EDGE: 2,
-    ENABLE_ON_ANY_EDGE: 3,
-    ENABLE_ON_LOW_LEVEL: 4,
-    ENABLE_ON_HIGH_LEVEL: 5,
-    BUTTON_MODE: 6
-};
-
-var PullupMode = {
-    FLOATING: 0,
-    HIGH: 1,
-    LOW: 2
-};
-
-var FUBConstants = {
-    TIMESTAMP: 'fub:timestamp'
-};
-
-function Sensor() {
-
-    var fub,
-        fubServer = 'ws://192.168.0.196:22000',
-        deviceID = Sys.conf.clubby.device_id;
-
-
-    function initialise() {
-        initialiseHardware();
-
-        fub = new FUBConnection(fubServer, deviceID);
-        fub.connect();
-        loop();
-    }
-
-    function initialiseHardware() {
-        print('Intialising pins...');
-        // Ultrasonic sensor
-        GPIO.setmode(Pins.ULTRASONIC_TRIGGER, PinMode.OUTPUT, PullupMode.LOW);
-        GPIO.setmode(Pins.ULTRASONIC_ECHO, PinMode.INPUT, PullupMode.LOW);
-
-    }
-
-    function loop() {
-        print('Starting loop...');
-
-        setTimeout(function() {
-            // Save the start time
-            fub.setOnce('/' + deviceID + '/sessionStart', FUBConstants.TIMESTAMP);
-            // Increment the run count
-            fub.increment('/' + deviceID + '/runCount');
-        }, 10000);
-
-        function innerLoop() {
-            setTimeout(function () {
-
-                // Send light sensor
-                fub.set('/' + deviceID + '/light/spot', ADC.read(0));
-
-                // Send ultrasonic
-                var distanceMM = GPIO.read(Pins.ULTRASONIC_TRIGGER, Pins.ULTRASONIC_ECHO);
-                fub.set('/' + deviceID + '/distance/spot', distanceMM);
-
-                // Save the counter
-                fub.set('/' + deviceID + '/lastUpdated', FUBConstants.TIMESTAMP);
-
-                innerLoop();
-
-            }, 1000);
-        }
-        innerLoop();
-    }
-
-    initialise();
-}
-
-setTimeout(function () {
-    print('Version 6');
-    print('Starting in 10 seconds');
-
-    setTimeout(function() {
-        new Sensor();
-    }, 10000);
-}, 1000);
-

@@ -1,2 +1,0 @@
-Http.get({host: '192.168.0.6', path: '/manifest.json', port: 8000 }, function (res) { print (res.body); }).end().setTimeout(3000, function() { this.abort(); });
-Http.get({host: 'httpbin.org', path: '/get?n=123' }, function (res) { print (res); }).end().setTimeout(3000, function() { this.abort(); });
