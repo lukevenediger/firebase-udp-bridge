@@ -1,13 +1,33 @@
+/* globals Plite, setTimeout, clearTimeout, print, WebSocket */
+
 var FUBConstants = {
     TIMESTAMP: 'fub:timestamp'
 };
 
+/**
+ * List of FUB events
+ */
+var FUBEvent = {
+    CONNECTED: 'connected'
+};
+
+/**
+ * A FUB connection
+ * @param {String} fubServer the FUB socket address
+ * @param {String} applicationID the application ID
+ * @param {String} deviceID the device ID
+ * @constructor
+ */
 function FUBConnection(fubServer, applicationID, deviceID) {
     var ws,
         sessionID,
         serverTime,
         attempts = 1,
-        isSocketReady = false;
+        isSocketReady = false,
+        subscriptions = {},
+        openRequests = {},
+        subscriptionCounter = 0,
+        events = {};
 
     var AUTH_TIMEOUT = 10000;
 
@@ -46,18 +66,22 @@ function FUBConnection(fubServer, applicationID, deviceID) {
             authenticate()
                 .then(function success(sID, sTime) {
                     print('Authenticated. SessionID: ' + sID);
+
                     sessionID = sID;
                     serverTime = sTime;
                     ws.onmessage = onIncomingMessage;
+
+                    // Mark ourselves as ready to communicate
                     isSocketReady = true;
+                    fireEvent(FUBEvent.CONNECTED);
                 })
                 .catch(function failed(error) {
-                    print ('Authentication failed: ' + error);
+                    print('Authentication failed: ' + error);
                     reconnect();
                 });
         };
 
-        ws.onerror = function(error) {
+        ws.onerror = function (error) {
             print('Error: ' + error);
         };
 
@@ -69,7 +93,7 @@ function FUBConnection(fubServer, applicationID, deviceID) {
 
         function reconnect() {
             print('Reconnecting...');
-            var time = generateInterval(attempts);
+            var time = Math.min(30000, attempts * 1000);
             print('Waiting ' + time + 'ms to reconnect...');
             setTimeout(function () {
                 // We've tried to reconnect so increment the attempts by 1
@@ -78,10 +102,6 @@ function FUBConnection(fubServer, applicationID, deviceID) {
                 // Connection has closed so try to reconnect every 10 seconds.
                 createWebSocket();
             }, time);
-        }
-
-        function generateInterval (k) {
-            return Math.min(30000, k * 1000);
         }
     }
 
@@ -118,17 +138,37 @@ function FUBConnection(fubServer, applicationID, deviceID) {
         });
     }
 
-    function onIncomingMessage(raw) {
-        print('Got: ' + raw.data);
+    function onIncomingMessage(message) {
+        print('Got: ' + message.data);
+
+        switch (message.type)  {
+            case MessageType.VALUE:
+                handleValueMessage(message);
+                break;
+        }
+    }
+
+    function handleValueMessage(message) {
+        var request = openRequests[message.requestID];
+        if (request) {
+            // Fire the callback
+            request.callback(message.value);
+            // See if we need to remove it
+            if (request.deleteOnComplete) {
+                delete openRequests[message.requestID];
+            }
+        }
     }
 
     function send(message, override) {
         if (isSocketReady || override) {
-            print('Socket is ready. ');
-            print('Stringifying ' + message);
+            print('Sending a ' + message.type + ' message.');
+            print(message);
+            /*
             var raw = JSON.stringify(message);
             print('Sending ' + raw);
             ws.send(raw);
+            */
         } else {
             print('Ignoring send - socket is not ready.');
         }
@@ -145,8 +185,18 @@ function FUBConnection(fubServer, applicationID, deviceID) {
         });
     }
 
+    function fireEvent(eventName) {
+        if (events[eventName]) {
+            events[eventName]();
+        }
+    }
+
+    /**
+     * Connect to the FUB and authenticate
+     * @returns {Promise} a promise to the active, authenticated connection
+     */
     this.connect = function() {
-        createWebSocket();
+        return createWebSocket();
     };
 
     this.getSessionID = function() {
@@ -154,33 +204,58 @@ function FUBConnection(fubServer, applicationID, deviceID) {
     };
 
     this.set = function(path, value) {
-        if (isSocketReady) {
-            send({
-                type: MessageType.SET,
-                path: path,
-                value: value
-            });
-        }
+        send({
+            type: MessageType.SET,
+            path: path,
+            value: value
+        });
     };
 
     this.setOnce = function(path, value) {
-        if (isSocketReady) {
-            send({
-                type: MessageType.SET_ONCE,
-                path: path,
-                value: value
-            });
-        }
+        send({
+            type: MessageType.SET_ONCE,
+            path: path,
+            value: value
+        });
     };
 
     this.increment = function(path, value) {
-        if (isSocketReady) {
-            send({
-                type: MessageType.INCREMENT,
-                path: path,
-                value: value
-            });
-        }
+        send({
+            type: MessageType.INCREMENT,
+            path: path,
+            value: value
+        });
+    };
+
+    /**
+     * Subscribe to a message channel
+     * @param {String} path the channel path
+     * @param {Function} callback a function to call when a message arrives
+     */
+    this.subscribeChannel = function(path, callback) {
+        subscriptionCounter += 1;
+        subscriptions[path] = {
+            requestID: subscriptionCounter
+        };
+        openRequests[subscriptionCounter] = {
+            callback: callback,
+            deleteOnComplete: false
+        };
+
+        // Issue the subscription request
+        send({
+            type: MessageType.SUBSCRIBE_CHANNEL,
+            path: path,
+            sessionID: sessionID,
+            requestID: subscriptionCounter
+        });
+    };
+
+    /**
+     * Unsubscribe from a channel or node
+     * @param {String} path the node or channel path
+     */
+    this.unsubscribe = function() {
     };
 
     this.logInfo = function(module, message) {
@@ -193,5 +268,12 @@ function FUBConnection(fubServer, applicationID, deviceID) {
 
     this.logError = function(module, message) {
         log(LogLevel.ERROR, module, message);
+    };
+
+    /**
+     * Subscribe to an event
+     */
+    this.on = function(eventName, callback) {
+        events[eventName] = callback;
     };
 }
